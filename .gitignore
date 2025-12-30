@@ -1,0 +1,25 @@
+# AWS
+*.pem
+*.key
+credentials
+config
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sensitive
+secrets/
+*.env
+*.log

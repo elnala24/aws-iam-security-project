@@ -1,0 +1,495 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'StartupCo IAM Setup - Groups, Users, and Policies'
+
+Parameters:
+  PasswordMinLength:
+    Type: Number
+    Default: 14
+    Description: Minimum password length
+  
+  PasswordMaxAge:
+    Type: Number
+    Default: 90
+    Description: Maximum password age in days
+  
+  PasswordReusePrevention:
+    Type: Number
+    Default: 5
+    Description: Number of previous passwords to prevent reuse
+
+Resources:
+  # ==========================================
+  # PASSWORD POLICY (Set via Custom Resource)
+  # ==========================================
+  # Note: CloudFormation doesn't have native support for password policy
+  # In practice, you'd set this manually via Console or CLI:
+  # aws iam update-account-password-policy --minimum-password-length 14 \
+  #   --require-symbols --require-numbers --require-uppercase-characters \
+  #   --require-lowercase-characters --max-password-age 90 \
+  #   --password-reuse-prevention 5 --allow-users-to-change-password
+
+  # ==========================================
+  # IAM GROUPS
+  # ==========================================
+  
+  DevelopersGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: developers-group
+      ManagedPolicyArns:
+        - !Ref DevelopersPolicy
+
+  OperationsGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: operations-group
+      ManagedPolicyArns:
+        - !Ref OperationsPolicy
+
+  FinanceGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: finance-group
+      ManagedPolicyArns:
+        - !Ref FinancePolicy
+
+  AnalystsGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: analysts-group
+      ManagedPolicyArns:
+        - !Ref AnalystsPolicy
+
+  # ==========================================
+  # CUSTOM IAM POLICIES
+  # ==========================================
+
+  DevelopersPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: DevelopersPolicy
+      Description: Policy for developers - EC2, S3, CloudWatch access
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          # EC2 Full Access
+          - Sid: EC2FullAccess
+            Effect: Allow
+            Action:
+              - ec2:*
+            Resource: '*'
+          
+          # S3 Access for application files (adjust bucket names as needed)
+          - Sid: S3ApplicationAccess
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+            Resource:
+              - arn:aws:s3:::startupo-app-assets/*
+              - arn:aws:s3:::startupo-app-assets
+              - arn:aws:s3:::startupo-dev-*/*
+              - arn:aws:s3:::startupo-dev-*
+          
+          # CloudWatch Logs - Read Only
+          - Sid: CloudWatchLogsReadOnly
+            Effect: Allow
+            Action:
+              - logs:DescribeLogGroups
+              - logs:DescribeLogStreams
+              - logs:GetLogEvents
+              - logs:FilterLogEvents
+              - cloudwatch:GetMetricData
+              - cloudwatch:GetMetricStatistics
+              - cloudwatch:ListMetrics
+            Resource: '*'
+
+  OperationsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: OperationsPolicy
+      Description: Policy for operations team - Full infrastructure access
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          # Full EC2 Access
+          - Sid: EC2FullAccess
+            Effect: Allow
+            Action:
+              - ec2:*
+            Resource: '*'
+          
+          # Full RDS Access
+          - Sid: RDSFullAccess
+            Effect: Allow
+            Action:
+              - rds:*
+            Resource: '*'
+          
+          # Full CloudWatch Access
+          - Sid: CloudWatchFullAccess
+            Effect: Allow
+            Action:
+              - cloudwatch:*
+              - logs:*
+            Resource: '*'
+          
+          # Systems Manager Access
+          - Sid: SystemsManagerAccess
+            Effect: Allow
+            Action:
+              - ssm:*
+              - ssmmessages:*
+              - ec2messages:*
+            Resource: '*'
+          
+          # VPC and Networking
+          - Sid: VPCAccess
+            Effect: Allow
+            Action:
+              - ec2:DescribeVpcs
+              - ec2:DescribeSubnets
+              - ec2:DescribeSecurityGroups
+              - ec2:DescribeNetworkInterfaces
+              - elasticloadbalancing:*
+            Resource: '*'
+          
+          # S3 Full Access
+          - Sid: S3FullAccess
+            Effect: Allow
+            Action:
+              - s3:*
+            Resource: '*'
+
+  FinancePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: FinancePolicy
+      Description: Policy for finance team - Cost management and read-only access
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          # Billing and Cost Management
+          - Sid: BillingAccess
+            Effect: Allow
+            Action:
+              - ce:*
+              - budgets:*
+              - cur:*
+              - aws-portal:ViewBilling
+              - aws-portal:ViewUsage
+              - pricing:*
+            Resource: '*'
+          
+          # Read-only access to resources for cost analysis
+          - Sid: ReadOnlyResourceAccess
+            Effect: Allow
+            Action:
+              - ec2:Describe*
+              - rds:Describe*
+              - s3:ListAllMyBuckets
+              - s3:GetBucketLocation
+              - cloudwatch:Describe*
+              - cloudwatch:Get*
+              - cloudwatch:List*
+            Resource: '*'
+
+  AnalystsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: AnalystsPolicy
+      Description: Policy for data analysts - Read-only S3 and RDS access
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          # S3 Read-Only Access
+          - Sid: S3ReadOnlyAccess
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetObject
+              - s3:GetBucketLocation
+            Resource:
+              - arn:aws:s3:::startupo-user-data
+              - arn:aws:s3:::startupo-user-data/*
+              - arn:aws:s3:::startupo-analytics-*
+              - arn:aws:s3:::startupo-analytics-*/*
+          
+          # RDS Read-Only Access
+          - Sid: RDSReadOnlyAccess
+            Effect: Allow
+            Action:
+              - rds:DescribeDBInstances
+              - rds:DescribeDBClusters
+              - rds:DescribeDBSnapshots
+              - rds:ListTagsForResource
+            Resource: '*'
+          
+          # CloudWatch Read-Only for monitoring
+          - Sid: CloudWatchReadOnly
+            Effect: Allow
+            Action:
+              - cloudwatch:Describe*
+              - cloudwatch:Get*
+              - cloudwatch:List*
+              - logs:DescribeLogGroups
+              - logs:DescribeLogStreams
+            Resource: '*'
+
+  # ==========================================
+  # IAM USERS (Examples - 1 per group)
+  # ==========================================
+  # Note: In production, you'd create all users or use AWS SSO/Identity Center
+  # For this demo, creating one user per group as an example
+
+  DeveloperUser1:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: dev-john-smith
+      Groups:
+        - !Ref DevelopersGroup
+      Tags:
+        - Key: Team
+          Value: Development
+        - Key: Environment
+          Value: Production
+
+  OperationsUser1:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: ops-jane-doe
+      Groups:
+        - !Ref OperationsGroup
+      Tags:
+        - Key: Team
+          Value: Operations
+        - Key: Environment
+          Value: Production
+
+  FinanceUser1:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: finance-manager
+      Groups:
+        - !Ref FinanceGroup
+      Tags:
+        - Key: Team
+          Value: Finance
+        - Key: Environment
+          Value: Production
+
+  AnalystUser1:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: analyst-alice-wong
+      Groups:
+        - !Ref AnalystsGroup
+      Tags:
+        - Key: Team
+          Value: DataAnalytics
+        - Key: Environment
+          Value: Production
+
+  # ==========================================
+  # MFA ENFORCEMENT POLICY (Applies to all groups)
+  # ==========================================
+  # This policy denies all actions unless MFA is enabled
+
+  MFAEnforcementPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: EnforceMFAPolicy
+      Description: Requires MFA for all AWS actions except IAM/STS for MFA setup
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          # Allow users to manage their own MFA
+          - Sid: AllowManageOwnMFA
+            Effect: Allow
+            Action:
+              - iam:CreateVirtualMFADevice
+              - iam:EnableMFADevice
+              - iam:GetUser
+              - iam:ListMFADevices
+              - iam:ListVirtualMFADevices
+              - iam:ResyncMFADevice
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:mfa/${!aws:username}'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:user/${!aws:username}'
+          
+          # Allow users to change their own password
+          - Sid: AllowChangeOwnPassword
+            Effect: Allow
+            Action:
+              - iam:ChangePassword
+              - iam:GetAccountPasswordPolicy
+            Resource: '*'
+          
+          # Deny all other actions if MFA is not present
+          - Sid: DenyAllExceptListedIfNoMFA
+            Effect: Deny
+            NotAction:
+              - iam:CreateVirtualMFADevice
+              - iam:EnableMFADevice
+              - iam:GetUser
+              - iam:ListMFADevices
+              - iam:ListVirtualMFADevices
+              - iam:ResyncMFADevice
+              - iam:ChangePassword
+              - iam:GetAccountPasswordPolicy
+              - sts:GetSessionToken
+            Resource: '*'
+            Condition:
+              BoolIfExists:
+                aws:MultiFactorAuthPresent: 'false'
+
+  # Attach MFA policy to all groups
+  DevelopersGroupMFAAttachment:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: DevelopersMFAEnforcement
+      Groups:
+        - !Ref DevelopersGroup
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyAllWithoutMFA
+            Effect: Deny
+            NotAction:
+              - iam:CreateVirtualMFADevice
+              - iam:EnableMFADevice
+              - iam:GetUser
+              - iam:ListMFADevices
+              - iam:ListVirtualMFADevices
+              - iam:ResyncMFADevice
+              - iam:ChangePassword
+              - iam:GetAccountPasswordPolicy
+              - sts:GetSessionToken
+            Resource: '*'
+            Condition:
+              BoolIfExists:
+                aws:MultiFactorAuthPresent: 'false'
+
+  OperationsGroupMFAAttachment:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: OperationsMFAEnforcement
+      Groups:
+        - !Ref OperationsGroup
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyAllWithoutMFA
+            Effect: Deny
+            NotAction:
+              - iam:CreateVirtualMFADevice
+              - iam:EnableMFADevice
+              - iam:GetUser
+              - iam:ListMFADevices
+              - iam:ListVirtualMFADevices
+              - iam:ResyncMFADevice
+              - iam:ChangePassword
+              - iam:GetAccountPasswordPolicy
+              - sts:GetSessionToken
+            Resource: '*'
+            Condition:
+              BoolIfExists:
+                aws:MultiFactorAuthPresent: 'false'
+
+  FinanceGroupMFAAttachment:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: FinanceMFAEnforcement
+      Groups:
+        - !Ref FinanceGroup
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyAllWithoutMFA
+            Effect: Deny
+            NotAction:
+              - iam:CreateVirtualMFADevice
+              - iam:EnableMFADevice
+              - iam:GetUser
+              - iam:ListMFADevices
+              - iam:ListVirtualMFADevices
+              - iam:ResyncMFADevice
+              - iam:ChangePassword
+              - iam:GetAccountPasswordPolicy
+              - sts:GetSessionToken
+            Resource: '*'
+            Condition:
+              BoolIfExists:
+                aws:MultiFactorAuthPresent: 'false'
+
+  AnalystsGroupMFAAttachment:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AnalystsMFAEnforcement
+      Groups:
+        - !Ref AnalystsGroup
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyAllWithoutMFA
+            Effect: Deny
+            NotAction:
+              - iam:CreateVirtualMFADevice
+              - iam:EnableMFADevice
+              - iam:GetUser
+              - iam:ListMFADevices
+              - iam:ListVirtualMFADevices
+              - iam:ResyncMFADevice
+              - iam:ChangePassword
+              - iam:GetAccountPasswordPolicy
+              - sts:GetSessionToken
+            Resource: '*'
+            Condition:
+              BoolIfExists:
+                aws:MultiFactorAuthPresent: 'false'
+
+# ==========================================
+# OUTPUTS
+# ==========================================
+Outputs:
+  DevelopersGroupArn:
+    Description: ARN of the Developers IAM Group
+    Value: !GetAtt DevelopersGroup.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-DevelopersGroup'
+
+  OperationsGroupArn:
+    Description: ARN of the Operations IAM Group
+    Value: !GetAtt OperationsGroup.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-OperationsGroup'
+
+  FinanceGroupArn:
+    Description: ARN of the Finance IAM Group
+    Value: !GetAtt FinanceGroup.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-FinanceGroup'
+
+  AnalystsGroupArn:
+    Description: ARN of the Analysts IAM Group
+    Value: !GetAtt AnalystsGroup.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-AnalystsGroup'
+
+  DevelopersPolicyArn:
+    Description: ARN of the Developers Policy
+    Value: !Ref DevelopersPolicy
+
+  OperationsPolicyArn:
+    Description: ARN of the Operations Policy
+    Value: !Ref OperationsPolicy
+
+  FinancePolicyArn:
+    Description: ARN of the Finance Policy
+    Value: !Ref FinancePolicy
+
+  AnalystsPolicyArn:
+    Description: ARN of the Analysts Policy
+    Value: !Ref AnalystsPolicy
