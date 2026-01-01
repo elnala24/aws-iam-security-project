@@ -61,8 +61,8 @@ Created four IAM groups with role-based permissions:
 
 ## 🛠️ Technologies Used
 
-- **AWS IAM** - Identity and Access Management
-- **AWS CloudFormation** - Infrastructure as Code
+- **AWS IAM** - Identity and Access Management ✅
+- **AWS CloudFormation** - Infrastructure as Code ✅
 - **Terraform** - Alternative IaC implementation ✅
 - **AWS CDK** - Alternative IaC implementation (coming soon)
 
