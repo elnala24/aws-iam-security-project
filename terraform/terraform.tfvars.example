@@ -1,0 +1,9 @@
+# Copy this file to terraform.tfvars and fill in your actual values
+# terraform.tfvars is in .gitignore to keep your account ID private
+
+aws_region         = "us-east-1"
+aws_account_id     = "123456789012"  # Replace with your AWS Account ID
+app_bucket_prefix  = "startupo-app"
+data_bucket_prefix = "startupo-data"
+project_name       = "startupo-iam"
+environment        = "production"
