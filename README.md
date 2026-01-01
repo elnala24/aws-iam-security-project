@@ -63,7 +63,7 @@ Created four IAM groups with role-based permissions:
 
 - **AWS IAM** - Identity and Access Management
 - **AWS CloudFormation** - Infrastructure as Code
-- **Terraform** - Alternative IaC implementation (coming soon)
+- **Terraform** - Alternative IaC implementation ✅
 - **AWS CDK** - Alternative IaC implementation (coming soon)
 
 ## 📁 Repository Structure
