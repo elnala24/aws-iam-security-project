@@ -1,182 +1,202 @@
-# AWS IAM Security Implementation for StartupCo
+# AWS IAM Security Implementation
+
+A comprehensive Identity and Access Management (IAM) security solution for a startup transitioning from manual AWS console management to Infrastructure as Code (IaC). This project demonstrates enterprise-grade security practices using three different IaC tools: CloudFormation, Terraform, and AWS CDK.
 
 ## 📋 Project Overview
 
-This project implements a comprehensive Identity and Access Management (IAM) solution for StartupCo, a fast-growing tech startup with a fitness tracking application. The company was using shared root account credentials across their team, which posed significant security risks. This solution establishes proper IAM structure with role-based access control (RBAC), MFA enforcement, and security best practices.
+### The Problem
 
-## 🎯 Problem Statement
+A growing startup had significant security vulnerabilities in their AWS environment:
 
-**Initial Security Issues:**
-- All 10 employees sharing root account credentials
-- No separation of duties or least privilege access
-- No Multi-Factor Authentication (MFA) enabled
-- Credentials shared via team chat
-- Single availability zone deployment
-- Default security groups in use
+- **Shared root credentials** — All employees used the same root account login
+- **No separation of duties** — Anyone could access any resource across departments
+- **Zero audit trail** — No logging or tracking of who made what changes
+- **Manual configuration** — All infrastructure created by hand in the AWS console
+- **Offboarding risk** — No way to quickly revoke access when employees left
+
+### The Solution
+
+I designed and implemented a role-based access control (RBAC) system with:
+
+- **4 IAM Groups** — Developers, Operations, Finance, and Analysts
+- **Least-privilege policies** — Each group only has access to what they need
+- **MFA enforcement** — All users required to enable multi-factor authentication
+- **Strong password policy** — Enterprise-grade password requirements
+- **Full audit capability** — CloudTrail integration for tracking all API calls
+- **Infrastructure as Code** — Reproducible, version-controlled infrastructure
 
 ## 🏗️ Architecture
 
-### Current Infrastructure
-![StartupCo Architecture](architecture/startupo-current-infrastructure.png)
+![Current Infrastructure](architecture/startupo-current-infrastructure.png)
 
-**Infrastructure Components:**
-- **VPC** with 1 public subnet and 2 private subnets
-- **Public Subnet:** Elastic Load Balancer (ELB) and EC2 instances
-- **Private Subnets:** Microservices (Subnet 1) and RDS databases (Subnet 2)
-- **Shared Services:** IAM, S3, CloudWatch
+### Group Permissions Summary
 
-## 🔐 Security Solution Implemented
-
-### IAM Structure
-
-Created four IAM groups with role-based permissions:
-
-1. **Developers Group** (4 users)
-   - Full EC2 management access
-   - S3 access for application files
-   - CloudWatch logs viewing (read-only)
-
-2. **Operations Group** (2 users)
-   - Full EC2, RDS, and CloudWatch access
-   - Systems Manager access
-   - VPC and networking management
-
-3. **Finance Group** (1 user)
-   - Cost Explorer and AWS Budgets access
-   - Read-only resource access for cost analysis
-   - Billing dashboard access
-
-4. **Analysts Group** (3 users)
-   - Read-only S3 access to user data buckets
-   - Read-only RDS access
-   - CloudWatch metrics viewing
-
-### Security Features
-
-✅ **MFA Enforcement** - All users required to enable MFA before accessing resources  
-✅ **Strong Password Policy** - 14+ characters, complexity requirements, 90-day rotation  
-✅ **Least Privilege Access** - Users only have permissions needed for their role  
-✅ **Root Account Secured** - MFA enabled, credentials stored securely  
-✅ **Audit Logging** - CloudTrail enabled for tracking all IAM actions  
+| Group | Access Level |
+|-------|--------------|
+| Developers | EC2, Lambda, S3 (dev buckets), CloudWatch Logs |
+| Operations | Full EC2, CloudWatch, Systems Manager |
+| Finance | S3 billing bucket (read-only), Cost Explorer, Budgets |
+| Analysts | DynamoDB (read-only), S3 data buckets (read-only), Athena |
 
 ## 🛠️ Technologies Used
 
-- **AWS IAM** - Identity and Access Management ✅
-- **AWS CloudFormation** - Infrastructure as Code ✅
-- **Terraform** - Alternative IaC implementation ✅
-- **AWS CDK** - Alternative IaC implementation (Python) ✅
+- **AWS IAM** — Identity and Access Management
+- **AWS CloudFormation** — AWS-native IaC
+- **Terraform** — Multi-cloud IaC tool
+- **AWS CDK (Python)** — Infrastructure using programming languages
+- **AWS CloudTrail** — API activity logging
+- **AWS CloudWatch** — Monitoring and alerting
 
-## 📁 Repository Structure
+## 📁 Project Structure
 
 ```
 aws-iam-security-project/
-├── README.md                          # This file
 ├── architecture/
 │   └── startupo-current-infrastructure.png
+├── aws-cdk/
+│   ├── app.py
+│   ├── cdk_stack.py
+│   ├── cdk.json
+│   ├── requirements.txt
+│   └── README.md
 ├── cloudformation/
-│   ├── iam-template.yaml              # CloudFormation template
-│   └── README.md                      # Deployment instructions
+│   └── iam-template.yaml
+├── terraform/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── provider.tf
+│   ├── terraform.tfvars.example
+│   └── README.md
 ├── docs/
-│   ├── Project 1 - Identity and Access Management.pdf
-│   ├── security-decisions.md          # Why I made certain choices
-│   └── screenshots/                   # Implementation screenshots
-└── .gitignore
+│   ├── screenshots/
+│   │   ├── 01-iam-groups-overview.png
+│   │   ├── 02-iam-users-list.png
+│   │   ├── 03-password-policy.png
+│   │   ├── 04-developers-permissions.png
+│   │   ├── 05-operations-permissions.png
+│   │   ├── 06-finance-permissions.png
+│   │   ├── 07-analysts-permissions.png
+│   │   └── 08-policy-details-example.png
+│   └── Project 1 - Identity and Access Management.pdf
+├── MEDIUM.md
+└── README.md
 ```
 
-## 🚀 Deployment Instructions
+## 🚀 Deployment Options
 
-### Prerequisites
-- AWS Account with admin access
-- AWS CLI installed and configured
-- CloudFormation permissions
+This project includes three different IaC implementations. Choose based on your needs:
 
-### Deploy via AWS Console
-
-1. Navigate to **CloudFormation** in AWS Console
-2. Click **Create Stack** → **With new resources**
-3. Choose **Upload a template file**
-4. Upload `cloudformation/iam-template.yaml`
-5. Stack name: `startupo-iam-stack`
-6. Click through and **Create Stack**
-
-### Deploy via AWS CLI
+### Option 1: Terraform (Recommended)
 
 ```bash
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your AWS account ID
+terraform init
+terraform plan
+terraform apply
+```
+
+### Option 2: CloudFormation
+
+```bash
+cd cloudformation
 aws cloudformation create-stack \
-  --stack-name startupo-iam-stack \
-  --template-body file://cloudformation/iam-template.yaml \
+  --stack-name iam-security-stack \
+  --template-body file://iam-template.yaml \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-### Set Password Policy
+### Option 3: AWS CDK (Python)
 
 ```bash
-aws iam update-account-password-policy \
-  --minimum-password-length 14 \
-  --require-symbols \
-  --require-numbers \
-  --require-uppercase-characters \
-  --require-lowercase-characters \
-  --max-password-age 90 \
-  --password-reuse-prevention 5 \
-  --allow-users-to-change-password
+cd aws-cdk
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cdk deploy
 ```
 
 ## 📸 Screenshots
 
-Screenshots of the implementation can be found in the `docs/screenshots/` directory:
-- IAM Groups structure
-- User permissions by group
-- MFA enforcement policies
-- Password policy configuration
+### IAM Groups Overview
+![IAM Groups](docs/screenshots/01-iam-groups-overview.png)
 
-## 🔑 Key Security Decisions
+### IAM Users
+![IAM Users](docs/screenshots/02-iam-users-list.png)
 
-### Why MFA Enforcement?
-MFA adds a critical second layer of security. Even if credentials are compromised, an attacker cannot access the account without the second factor.
+### Password Policy
+![Password Policy](docs/screenshots/03-password-policy.png)
 
-### Why Separate Groups?
-Role-based access control (RBAC) follows the principle of least privilege - users only get permissions necessary for their job function, reducing the blast radius of any security incident.
+## 🔐 Security Features
 
-### Why Read-Only for Analysts?
-Data analysts need to query and analyze data but don't need to modify infrastructure. Read-only access prevents accidental deletion or modification of critical data.
+### Least Privilege Access
+Each group policy follows the principle of least privilege — users only have permissions necessary for their job function.
 
-### Why No Root Account Usage?
-The root account has unrestricted access to everything. Using IAM users with specific permissions limits damage from compromised credentials.
+**Example: Finance Policy**
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "s3:GetObject",
+    "s3:ListBucket"
+  ],
+  "Resource": [
+    "arn:aws:s3:::company-billing-data",
+    "arn:aws:s3:::company-billing-data/*"
+  ]
+}
+```
 
-## 📚 What I Learned
+### MFA Enforcement
+All users must enable MFA before accessing AWS resources. The MFA policy denies all actions except IAM self-service until MFA is configured.
 
-- Implementing least privilege access at scale
-- CloudFormation IAM policy syntax and best practices
-- MFA enforcement using IAM condition keys
-- The importance of separating duties in cloud environments
-- How to structure Infrastructure as Code for maintainability
+### Password Policy
+- Minimum 14 characters
+- Requires uppercase, lowercase, numbers, and symbols
+- Password expiration every 90 days
+- Prevents password reuse (last 24 passwords)
 
-## 🔮 Future Improvements
+## 📝 Blog Post
 
-- [ ] Implement AWS Organizations for multi-account structure
-- [ ] Add AWS SSO/Identity Center for federated access
-- [ ] Create Terraform and CDK implementations
-- [ ] Add automated compliance checking with AWS Config
-- [ ] Implement permission boundaries for additional security
-- [ ] Add high availability across multiple AZs
-- [ ] Replace default security groups with custom rules
+For a detailed walkthrough of this project, read my Medium article:
+https://medium.com/@elnala24/project-iam-security-using-iac-cloudformation-546ee94485e0
 
-## 🤝 Contributing
+## 🧹 Cleanup
 
-This is a portfolio project, but feedback is always welcome! Feel free to open an issue if you spot any security concerns or have suggestions for improvement.
+To avoid ongoing AWS charges, destroy the resources when done:
 
-## 📝 License
+**Terraform:**
+```bash
+cd terraform
+terraform destroy
+```
 
-This project is open source and available for educational purposes.
+**CloudFormation:**
+```bash
+aws cloudformation delete-stack --stack-name iam-security-stack
+```
 
-## 👤 Author
+**CDK:**
+```bash
+cd aws-cdk
+cdk destroy
+```
 
-**Alan**
-- GitHub: https://github.com/elnala24
-- LinkedIn: https://www.linkedin.com/in/alantommyle/
-- Email: elnala24@gmail.com
+## 📚 Lessons Learned
 
----
+- **Groups over direct user policies** — Easier management, cleaner offboarding
+- **IaC is essential** — Version control, reproducibility, and documentation in one
+- **Least privilege takes planning** — Understanding each team's actual needs before writing policies
+- **Multiple IaC tools have tradeoffs** — Terraform for multi-cloud, CDK for complex logic, CloudFormation for AWS-native
 
-*This project was completed as part of my AWS Cloud Computing bootcamp portfolio.*
+## 🔗 Connect
+
+- [LinkedIn](https://www.linkedin.com/in/alantommyle/)
+- [GitHub](https://github.com/elnala24)
+- [Medium](https://medium.com/@elnala24)
+
+## 📄 License
+
+This project is open source and available under the MIT License.
