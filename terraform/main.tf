@@ -7,6 +7,7 @@ resource "aws_iam_group" "developers" {
   path = "/"
 }
 
+
 resource "aws_iam_group" "operations" {
   name = "operations-group"
   path = "/"
@@ -29,7 +30,7 @@ resource "aws_iam_group" "analysts" {
 resource "aws_iam_policy" "developers_policy" {
   name        = "DevelopersPolicy"
   description = "Policy for developers - EC2, S3, CloudWatch access"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -85,7 +86,7 @@ resource "aws_iam_group_policy_attachment" "developers_attach" {
 resource "aws_iam_policy" "operations_policy" {
   name        = "OperationsPolicy"
   description = "Policy for operations team - Full infrastructure access"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -154,7 +155,7 @@ resource "aws_iam_group_policy_attachment" "operations_attach" {
 resource "aws_iam_policy" "finance_policy" {
   name        = "FinancePolicy"
   description = "Policy for finance team - Cost management and read-only access"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -201,7 +202,7 @@ resource "aws_iam_group_policy_attachment" "finance_attach" {
 resource "aws_iam_policy" "analysts_policy" {
   name        = "AnalystsPolicy"
   description = "Policy for data analysts - Read-only S3 and RDS access"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -257,7 +258,7 @@ resource "aws_iam_group_policy_attachment" "analysts_attach" {
 resource "aws_iam_policy" "mfa_enforcement" {
   name        = "EnforceMFAPolicy"
   description = "Requires MFA for all AWS actions except IAM/STS for MFA setup"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -287,8 +288,8 @@ resource "aws_iam_policy" "mfa_enforcement" {
         Resource = "*"
       },
       {
-        Sid       = "DenyAllExceptListedIfNoMFA"
-        Effect    = "Deny"
+        Sid    = "DenyAllExceptListedIfNoMFA"
+        Effect = "Deny"
         NotAction = [
           "iam:CreateVirtualMFADevice",
           "iam:EnableMFADevice",
@@ -333,74 +334,88 @@ resource "aws_iam_group_policy_attachment" "analysts_mfa" {
 }
 
 # ==========================================
-# IAM USERS (Examples)
+# IAM USERS & GROUP MEMBERSHIPS
 # ==========================================
 
 resource "aws_iam_user" "developer_1" {
-  name = "dev-john-smith"
-  path = "/"
-  
-  tags = {
-    Team        = "Development"
-    Environment = "Production"
-  }
+  name = "dev-user-1"
 }
 
-resource "aws_iam_user_group_membership" "developer_1_groups" {
-  user = aws_iam_user.developer_1.name
-  groups = [
-    aws_iam_group.developers.name
-  ]
+resource "aws_iam_user" "developer_2" {
+  name = "dev-user-2"
+}
+
+resource "aws_iam_user" "developer_3" {
+  name = "dev-user-3"
+}
+
+resource "aws_iam_user" "developer_4" {
+  name = "dev-user-4"
 }
 
 resource "aws_iam_user" "operations_1" {
-  name = "ops-jane-doe"
-  path = "/"
-  
-  tags = {
-    Team        = "Operations"
-    Environment = "Production"
-  }
+  name = "ops-user-1"
 }
 
-resource "aws_iam_user_group_membership" "operations_1_groups" {
-  user = aws_iam_user.operations_1.name
-  groups = [
-    aws_iam_group.operations.name
-  ]
+resource "aws_iam_user" "operations_2" {
+  name = "ops-user-2"
 }
 
 resource "aws_iam_user" "finance_1" {
-  name = "finance-manager"
-  path = "/"
-  
-  tags = {
-    Team        = "Finance"
-    Environment = "Production"
-  }
-}
-
-resource "aws_iam_user_group_membership" "finance_1_groups" {
-  user = aws_iam_user.finance_1.name
-  groups = [
-    aws_iam_group.finance.name
-  ]
+  name = "finance-user-1"
 }
 
 resource "aws_iam_user" "analyst_1" {
-  name = "analyst-alice-wong"
-  path = "/"
-  
-  tags = {
-    Team        = "DataAnalytics"
-    Environment = "Production"
-  }
+  name = "analyst-user-1"
 }
 
-resource "aws_iam_user_group_membership" "analyst_1_groups" {
-  user = aws_iam_user.analyst_1.name
-  groups = [
-    aws_iam_group.analysts.name
+resource "aws_iam_user" "analyst_2" {
+  name = "analyst-user-2"
+}
+
+resource "aws_iam_user" "analyst_3" {
+  name = "analyst-user-3"
+}
+
+# ==========================================
+# IAM GROUP MEMBERSHIPS
+# ==========================================
+
+resource "aws_iam_group_membership" "developers" {
+  name  = "developers-membership"
+  group = aws_iam_group.developers.name
+  users = [
+    aws_iam_user.developer_1.name,
+    aws_iam_user.developer_2.name,
+    aws_iam_user.developer_3.name,
+    aws_iam_user.developer_4.name,
+  ]
+}
+
+resource "aws_iam_group_membership" "operations" {
+  name  = "operations-membership"
+  group = aws_iam_group.operations.name
+  users = [
+    aws_iam_user.operations_1.name,
+    aws_iam_user.operations_2.name,
+  ]
+}
+
+resource "aws_iam_group_membership" "finance" {
+  name  = "finance-membership"
+  group = aws_iam_group.finance.name
+  users = [
+    aws_iam_user.finance_1.name,
+  ]
+}
+
+resource "aws_iam_group_membership" "analysts" {
+  name  = "analysts-membership"
+  group = aws_iam_group.analysts.name
+  users = [
+    aws_iam_user.analyst_1.name,
+    aws_iam_user.analyst_2.name,
+    aws_iam_user.analyst_3.name,
   ]
 }
 
