@@ -52,10 +52,11 @@ I designed and implemented a role-based access control (RBAC) system with:
 - **AWS CloudWatch** — Monitoring and alerting
 
 ## 📁 Project Structure
-
 ```
 aws-iam-security-project/
 ├── architecture/
+│   ├── start-design.png
+│   ├── finish-design.png
 │   └── startupo-current-infrastructure.png
 ├── aws-cdk/
 │   ├── app.py
