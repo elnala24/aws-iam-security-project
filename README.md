@@ -27,16 +27,20 @@ I designed and implemented a role-based access control (RBAC) system with:
 
 ## 🏗️ Architecture
 
-![Current Infrastructure](architecture/startupo-current-infrastructure.png)
+### Before: Security Vulnerabilities
+![Before Architecture](architecture/start-design.png)
+
+### After: Secure RBAC Implementation
+![After Architecture](architecture/finish-design.png)
 
 ### Group Permissions Summary
 
-| Group | Access Level |
-|-------|--------------|
-| Developers | EC2, Lambda, S3 (dev buckets), CloudWatch Logs |
-| Operations | Full EC2, CloudWatch, Systems Manager |
-| Finance | S3 billing bucket (read-only), Cost Explorer, Budgets |
-| Analysts | DynamoDB (read-only), S3 data buckets (read-only), Athena |
+| Group | Users | Access Level |
+|-------|-------|--------------|
+| Developers | 4 | EC2, S3 (app buckets), CloudWatch Logs |
+| Operations | 2 | Full EC2, RDS, CloudWatch, Systems Manager, S3, VPC |
+| Finance | 1 | Cost Explorer, Budgets, Billing, Read-only resources |
+| Analysts | 3 | S3 data buckets (read-only), RDS (read-only), CloudWatch |
 
 ## 🛠️ Technologies Used
 
