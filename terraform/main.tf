@@ -35,12 +35,24 @@ resource "aws_iam_policy" "developers_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "EC2FullAccess"
+        Sid    = "EC2DeveloperAccess"
         Effect = "Allow"
         Action = [
-          "ec2:*"
+          "ec2:DescribeInstances",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeKeyPairs",
+          "ec2:StartInstances",
+          "ec2:StopInstances",
+          "ec2:RebootInstances"
         ]
         Resource = "*"
+        Condition = {
+          StringEquals = {
+            "ec2:ResourceTag/Environment" = "development"
+          }
+        }
       },
       {
         Sid    = "S3ApplicationAccess"
